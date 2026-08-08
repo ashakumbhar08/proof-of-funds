@@ -1,3 +1,7 @@
+
+LIVE PRODUCTION LINK - https://frontend-seven-khaki-68.vercel.app
+
+
 # ProofOfFunds — Private Proof of Solvency
 
 > Zero-Knowledge financial verification on Midnight Network. Prove you meet a financial threshold — without revealing your balance, account numbers, or transaction history.
