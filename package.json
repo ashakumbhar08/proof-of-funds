@@ -1,0 +1,32 @@
+{
+  "name": "proof-of-funds",
+  "version": "1.0.0",
+  "description": "Private Proof of Solvency dApp on Midnight Network",
+  "type": "module",
+  "scripts": {
+    "compile": "compact compile contracts/proof_of_funds.compact managed",
+    "setup": "npm install && cd frontend && npm install",
+    "deploy": "node --experimental-vm-modules --loader ts-node/esm src/deploy.ts",
+    "cli": "node --experimental-vm-modules --loader ts-node/esm src/cli.ts",
+    "network": "docker compose -f compose.yml up -d",
+    "network:stop": "docker compose -f compose.yml down",
+    "network:logs": "docker compose -f compose.yml logs -f",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "4.1.1",
+    "@midnight-ntwrk/midnight-js-protocol": "4.1.1",
+    "@midnight-ntwrk/midnight-js": "4.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "ts-node": "^10.9.2",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.14.0"
+  }
+}
