@@ -1,0 +1,170 @@
+// =============================================================================
+// ProofOfFunds — Private Proof of Solvency
+// Midnight Network dApp | INTO the Midnight — SPPU Bootcamp
+// =============================================================================
+//
+// PRIVACY DESIGN
+// ==============
+// PUBLIC  (on-chain — visible to every observer):
+//   - nextRequestId     : auto-incrementing request counter
+//   - reqThreshold      : the minimum balance a verifier requires (e.g. 5000)
+//   - reqVerifierKey    : commitment to the verifier's identity (NOT the secret)
+//   - reqStatus         : 0 = OPEN, 1 = CLOSED
+//   - reqAttestation    : Boolean — true once a valid proof is submitted
+//   - reqTimestamp      : Counter value at proof submission (block proxy)
+//
+// PRIVATE (witness / circuit-only — NEVER written to the ledger):
+//   - proverBalance()   : the user's actual balance.  The ZK circuit checks
+//                         (proverBalance >= threshold) and publishes ONLY the
+//                         boolean result.  The exact figure is cryptographically
+//                         hidden from all observers, including validators.
+//   - verifierSecret()  : the verifier's local secret key, used to derive a
+//                         public commitment (verifierKey) without leaking the key.
+//
+// What an on-chain observer learns:
+//   "Request #3 requires >= 5 000 units.  At block 812 someone proved they
+//    meet it."  They learn NOTHING about the actual balance.
+// =============================================================================
+
+pragma language_version >= 0.23;
+
+import CompactStandardLibrary;
+
+// ---------------------------------------------------------------------------
+// Ledger  (public on-chain state — flat Maps with scalar value types)
+// ---------------------------------------------------------------------------
+
+export ledger nextRequestId  : Counter;
+
+export ledger reqThreshold   : Map<Uint<64>, Uint<64>>;
+export ledger reqVerifierKey : Map<Uint<64>, Bytes<32>>;
+export ledger reqStatus      : Map<Uint<64>, Uint<8>>;
+export ledger reqAttestation : Map<Uint<64>, Boolean>;
+export ledger reqTimestamp   : Map<Uint<64>, Uint<64>>;
+
+// ---------------------------------------------------------------------------
+// Witnesses  (private inputs — never touch the ledger)
+// ---------------------------------------------------------------------------
+
+// The verifier's secret key — only used to derive a public commitment.
+witness verifierSecret(): Bytes<32>;
+
+// The prover's private balance — used only inside the circuit constraint.
+// It is evaluated against `threshold` and then discarded.  Never stored.
+witness proverBalance(): Uint<64>;
+
+// ---------------------------------------------------------------------------
+// Internal helper: derive a public commitment from a secret + nonce
+// ---------------------------------------------------------------------------
+
+circuit publicKeyFrom(sk: Bytes<32>, nonce: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "pof:vk:"), nonce, sk]);
+}
+
+// ---------------------------------------------------------------------------
+// Circuit 1 — createRequest
+// Verifier publishes a new proof request on-chain.
+// ALL ledger writes are public.  verifierSecret() never leaves the circuit.
+// ---------------------------------------------------------------------------
+
+export circuit createRequest(threshold: Uint<64>): Uint<64> {
+  // Read current request count and disclose it as the new public ID.
+  const id = disclose(nextRequestId as Uint<64>);
+
+  // Derive a public commitment from the verifier's private secret.
+  // The raw secret is NEVER stored — only the hash commitment is.
+  const sk    = verifierSecret();
+  const nonce = pad(32, "pof:id:");
+  const vKey  = publicKeyFrom(sk, nonce);
+
+  // Advance the counter.
+  nextRequestId.increment(1);
+
+  // Write all public fields.
+  reqThreshold.insert(id,   disclose(threshold));
+  reqVerifierKey.insert(id, disclose(vKey));
+  reqStatus.insert(id,      disclose(0 as Uint<8>));   // OPEN
+  reqAttestation.insert(id, disclose(false));
+  reqTimestamp.insert(id,   disclose(0 as Uint<64>));
+
+  return id;
+}
+
+// ---------------------------------------------------------------------------
+// Circuit 2 — submitProof
+// Core ZK range proof: proves balance >= threshold without revealing balance.
+// proverBalance() is a private witness; ONLY the boolean result is published.
+// ---------------------------------------------------------------------------
+
+export circuit submitProof(requestId: Uint<64>): Boolean {
+  // Disclose requestId — it is a public lookup key, not a secret.
+  const pubId = disclose(requestId);
+
+  // Read public state for this request.
+  assert(reqStatus.member(pubId),      "Request does not exist");
+  const threshold   = reqThreshold.lookup(pubId);
+  const status      = reqStatus.lookup(pubId);
+  const alreadyDone = reqAttestation.lookup(pubId);
+
+  // Guards.
+  assert(status == 0 as Uint<8>, "Request is not open");
+  assert(!alreadyDone,           "Proof already submitted for this request");
+
+  // *** THE CORE ZK ASSERTION ***
+  // proverBalance() is a private witness: it enters the circuit but is
+  // NEVER stored on-chain.  The circuit constrains it against the public
+  // threshold.  Observers see only the Boolean outcome below.
+  const balance = proverBalance();
+  assert(balance >= threshold, "Balance does not meet the required threshold");
+
+  // Record ONLY the boolean attestation on-chain.  Balance is dropped here.
+  reqAttestation.insert(pubId, disclose(true));
+  reqTimestamp.insert(pubId,   disclose(nextRequestId as Uint<64>));
+
+  disclose(true);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Circuit 3 — revokeRequest
+// Verifier closes their own request.  Proves ownership via secret key.
+// ---------------------------------------------------------------------------
+
+export circuit revokeRequest(requestId: Uint<64>): Boolean {
+  // Disclose requestId — it is a public lookup key.
+  const pubId = disclose(requestId);
+
+  assert(reqStatus.member(pubId), "Request does not exist");
+  const storedKey = reqVerifierKey.lookup(pubId);
+  const status    = reqStatus.lookup(pubId);
+
+  assert(status == 0 as Uint<8>, "Request is already closed");
+
+  // Re-derive the verifier key from the private secret and check ownership.
+  // verifierSecret() is private — it never reaches the ledger.
+  const sk    = verifierSecret();
+  const nonce = pad(32, "pof:id:");
+  const vKey  = publicKeyFrom(sk, nonce);
+  assert(vKey == storedKey, "Not the owner of this request");
+
+  reqStatus.insert(pubId, disclose(1 as Uint<8>));  // CLOSED
+
+  disclose(true);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Circuit 4 — getAttestationStatus  (read-only)
+// Returns the public attestation boolean for a given requestId.
+// No private data involved.
+// ---------------------------------------------------------------------------
+
+export circuit getAttestationStatus(requestId: Uint<64>): Boolean {
+  // Disclose requestId — it is a public lookup key.
+  const pubId = disclose(requestId);
+
+  assert(reqAttestation.member(pubId), "Request does not exist");
+  const result = reqAttestation.lookup(pubId);
+  disclose(result);
+  return result;
+}
