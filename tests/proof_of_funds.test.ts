@@ -3,6 +3,11 @@
  *
  * Unit tests for the ProofOfFunds contract logic.
  *
+ * Level 3 Test Coverage:
+ *   - Circuit business logic (range proof evaluation)
+ *   - State transitions (contract lifecycle)
+ *   - Privacy guarantees (private witness never exposed)
+ *
  * NOTE on ZK proving:
  *   Full end-to-end proving requires the local devnet (Docker) and proof-server.
  *   These tests cover:
