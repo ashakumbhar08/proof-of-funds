@@ -177,3 +177,23 @@ npm run network:stop
 ```
 
 The balance is a **private witness** in Compact terminology. It enters the ZK circuit as a callback (`witness proverBalance(): Uint<64>`) and is used only to satisfy the circuit constraint. It is never assigned to a ledger field, never logged, and never appears in any transaction payload.
+
+### What Observers CAN Learn
+
+On-chain observers (including verifiers, blockchain explorers, and network validators) can see:
+- **Request ID** - A unique identifier for each verification request
+- **Threshold Value** - The minimum balance requirement (e.g., ≥ 5,000 units)
+- **Boolean Attestation** - Whether the proof succeeded (true) or failed (false)
+- **Block Height** - When the proof was submitted
+- **Request Status** - Whether the request is OPEN or CLOSED
+
+### What Observers CANNOT Learn
+
+The zero-knowledge proof ensures that observers **never** learn:
+- **Actual Balance** - The prover's real balance (could be $5,001 or $5,000,000)
+- **Margin** - By how much the prover exceeds the threshold
+- **Prover Identity** - No wallet address or identity is linked to the attestation
+- **Account Details** - No bank account numbers, transaction history, or financial patterns
+- **Private Computations** - Any intermediate values used inside the ZK circuit
+
+This privacy guarantee is cryptographically enforced by Midnight's ZK proof system and cannot be bypassed.
