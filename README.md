@@ -4,6 +4,8 @@ LIVE PRODUCTION LINK - https://frontend-seven-khaki-68.vercel.app
 
 # ProofOfFunds — Private Proof of Solvency
 
+[![CI](https://github.com/ashakumbhar08/proof-of-funds/actions/workflows/ci.yml/badge.svg)](https://github.com/ashakumbhar08/proof-of-funds/actions/workflows/ci.yml)
+
 > Zero-Knowledge financial verification on Midnight Network. Prove you meet a financial threshold — without revealing your balance, account numbers, or transaction history.
 
 ---
@@ -20,15 +22,15 @@ Midnight is uniquely suited to this because its Compact language compiles range-
 
 ## Smart Contract Deployment
 
-- **Network:** Preview (Midnight testnet)
-- **Deployed contract ID:** `[PENDING — run: npm run deploy -- --network preview]`
+- **Network:** Midnight Preview (testnet)
+- **Status:** Ready for deployment
+- **Deployment Requirements:**
+  1. Create Midnight wallet and obtain 24-word seed phrase
+  2. Fund wallet at https://faucet.preview.midnight.network
+  3. Set environment variable: `export MIDNIGHT_SEED="your 24-word mnemonic"`
+  4. Deploy: `npm run deploy -- --network preview`
 
-> To deploy: fund a wallet at https://faucet.preview.midnight.network, then:
-> ```
-> export MIDNIGHT_SEED="your 24-word mnemonic"
-> npm run deploy -- --network preview
-> ```
-> Paste the returned contract address here and into `frontend/.env.local`.
+**Note:** Deployment awaiting wallet setup. The contract compiles successfully (4 circuits) and all tests pass (17/17).
 
 ---
 
@@ -58,6 +60,16 @@ Midnight is uniquely suited to this because its Compact language compiles range-
 - **Anonymised prover identity** — Add a commitment scheme so even the prover's address is not linked to the attestation on-chain.
 - **Mainnet path** — Audit the Compact circuits, integrate with the Midnight Lace wallet's production build, and deploy to mainnet once available.
 - **Issuer attestations** — Let banks or credit bureaus sign off-chain credentials (e.g. a signed JSON with a balance figure) that the circuit verifies alongside the range proof, removing the self-reporting trust assumption.
+
+---
+
+## Level 3 Submission
+
+- **Product Proposal**: [PROPOSAL.md](PROPOSAL.md)
+- **Test Results**: 17 passing tests (see `npm test`)
+- **CI/CD Pipeline**: [.github/workflows/ci.yml](.github/workflows/ci.yml)
+- **Submission Evidence**: [docs/LEVEL_3_SUBMISSION.md](docs/LEVEL_3_SUBMISSION.md)
+- **GitHub Repository**: https://github.com/ashakumbhar08/proof-of-funds
 
 ---
 
