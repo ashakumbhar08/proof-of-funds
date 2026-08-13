@@ -57,6 +57,10 @@ async function main(): Promise<void> {
   // ---------------------------------------------------------------------------
   // Deploy the compiled contract
   //
+  // DEPLOYMENT NOTE for Level 3:
+  // This script is structured for Midnight SDK integration. Actual deployment
+  // requires MIDNIGHT_SEED environment variable with a funded wallet.
+  //
   // REAL DEPLOYMENT: Replace the placeholder below with the actual SDK call:
   //
   //   import { DeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
