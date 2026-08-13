@@ -20,26 +20,14 @@ jobs:
         node-version: '20.x'
         cache: 'npm'
     
-    - name: Install Compact toolchain
-      run: |
-        curl -sSL https://get.midnight.network/compact | sh || true
-        if [ -d "$HOME/.compact/bin" ]; then
-          echo "$HOME/.compact/bin" >> $GITHUB_PATH
-        fi
-    
-    - name: Compile Compact contract (if toolchain available)
-      continue-on-error: true
-      run: |
-        if command -v compact &> /dev/null; then
-          compact --version
-          npm run compile
-        else
-          echo "⚠️  Compact toolchain not available - skipping compilation"
-          echo "Tests will validate contract logic without compiled circuits"
-        fi
-    
     - name: Install dependencies
       run: npm ci
+    
+    - name: Compile Compact contract
+      run: npx compact compile contracts/proof_of_funds.compact managed
+    
+    - name: Run test suite
+      run: npm test
     
     - name: Run test suite
       run: npm test
