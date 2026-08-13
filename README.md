@@ -5,6 +5,10 @@ LIVE PRODUCTION LINK - https://frontend-seven-khaki-68.vercel.app
 # ProofOfFunds — Private Proof of Solvency
 
 [![CI](https://github.com/ashakumbhar08/proof-of-funds/actions/workflows/ci.yml/badge.svg)](https://github.com/ashakumbhar08/proof-of-funds/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Midnight Network](https://img.shields.io/badge/Midnight-Network-purple)](https://midnight.network)
+[![Compact](https://img.shields.io/badge/Compact-v0.31.1-blue)](https://docs.midnight.network)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green)](https://nodejs.org)
 
 > Zero-Knowledge financial verification on Midnight Network. Prove you meet a financial threshold — without revealing your balance, account numbers, or transaction history.
 
