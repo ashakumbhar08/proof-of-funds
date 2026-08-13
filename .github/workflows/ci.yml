@@ -29,9 +29,6 @@ jobs:
     - name: Run test suite
       run: npm test
     
-    - name: Run test suite
-      run: npm test
-    
     - name: Install frontend dependencies
       run: cd frontend && npm ci
     
