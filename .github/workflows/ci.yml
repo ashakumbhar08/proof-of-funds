@@ -9,28 +9,41 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
+
     - name: Use Node.js 20.x
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
-    
-    - name: Install dependencies
+
+    - name: Install Compact toolchain
+      run: |
+        curl -fsSL https://github.com/midnightntwrk/compact/releases/download/compact-v0.5.1/compact-installer.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install Compact compiler 0.31.1
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        compact update 0.31.1
+        compact --version
+
+    - name: Install root dependencies
       run: npm ci
-    
+
     - name: Compile Compact contract
-      run: npx compact compile contracts/proof_of_funds.compact managed
-    
+      run: |
+        export PATH="$HOME/.local/bin:$PATH"
+        npm run compile
+
     - name: Run test suite
       run: npm test
-    
+
     - name: Install frontend dependencies
       run: cd frontend && npm ci
-    
+
     - name: Build frontend
       run: cd frontend && npm run build
